@@ -1,0 +1,40 @@
+node {
+        stage 'notify'
+        notify('Started')
+        
+        try{
+
+            def project_path = "spring-boot-samples/spring-boot-sample-atmosphere/"
+            
+            stage 'checkout'
+            git 'https://github.com/vengolan/jenkins2-course-spring-boot.git'
+            
+            dir("${project_path}") {
+            
+                stage 'compile,test,package'
+                sh label: '', script: "mvn clean package"
+                
+                stage 'archive'
+                archiveArtifacts(
+                            allowEmptyArchive: true, 
+                            artifacts: "target/*.jar",
+                            )
+        }
+        notify("Success")
+    
+    } catch (err) {
+        notify("Error!!! ${err}")
+        currentBuild.result = 'FAILURE'
+    }
+
+
+}
+
+def notify(status){
+    emailext (
+            subject: "STATUS: ${status} - JOB: ${env.JOB_NAME} - [${env.BUILD_NUMBER}]", 
+            to: 'venkat.r@greyamnp.com',
+            body: """<p>${status}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+        <p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+    )
+}
